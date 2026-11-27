@@ -50,7 +50,7 @@ Legenda: `[ ]` belum, `[~]` berjalan, `[x]` selesai
 - [ ] Uji di HP (iOS Safari dan Android Chrome)
 
 ## Fase 5: Deploy
-- [x] Docker Compose penuh (`docker-compose.yml`: `backend` + `web` Nginx) — berjalan lokal di port 8080
+- [x] Docker Compose penuh (`docker-compose.yml`: `backend` + `web` Nginx) — port `3230` sesuai tunnel `part-finder.pltgucilegon.com`
 - [ ] Migrasi ke server Ubuntu `10.8.140.80` dan sambungkan `cloudflared` ke `part-finder.pltgucilegon.com`
 - [ ] Cloudflare Access (daftar pengguna)
 - [ ] Uji akses dari luar jaringan kantor
