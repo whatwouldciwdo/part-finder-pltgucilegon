@@ -16,6 +16,7 @@ load_dotenv(ROOT / ".env")
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
 PAGES_DIR = Path(os.environ.get("PAGES_DIR", str(ROOT / "data" / "pages")))
+WEB_DIST_DIR = Path(os.environ.get("WEB_DIST_DIR", str(ROOT / "web" / "dist")))
 
 pool: ConnectionPool | None = None
 
@@ -395,3 +396,25 @@ def get_page_image(pdf_page: int, catalog: str | None = None):
                 headers={"Cache-Control": "public, max-age=86400"},
             )
     raise HTTPException(status_code=404, detail="Page image not found")
+
+
+@app.get("/{full_path:path}")
+def serve_spa(full_path: str):
+    if full_path.startswith("api/"):
+        raise HTTPException(status_code=404, detail="Not found")
+    if not WEB_DIST_DIR.is_dir():
+        raise HTTPException(status_code=404, detail="Frontend build (web/dist) not found")
+
+    dist_root = WEB_DIST_DIR.resolve()
+    if full_path:
+        target = (dist_root / full_path).resolve()
+        if str(target).startswith(str(dist_root)) and target.is_file():
+            cache = "public, max-age=31536000, immutable" if full_path.startswith("assets/") else "public, max-age=3600"
+            if full_path in ("sw.js", "manifest.webmanifest"):
+                cache = "no-cache"
+            return FileResponse(target, headers={"Cache-Control": cache})
+
+    index_file = dist_root / "index.html"
+    if not index_file.is_file():
+        raise HTTPException(status_code=404, detail="index.html not found")
+    return FileResponse(index_file, headers={"Cache-Control": "no-cache"})
