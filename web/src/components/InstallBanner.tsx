@@ -75,7 +75,7 @@ export function InstallBanner({ lang }: { lang: Lang }) {
       <div className="install-banner-text">
         <strong>{id ? 'Install Part Finder' : 'Install Part Finder'}</strong>
         {promptEvent ? (
-          <span>{id ? 'Pasang ke layar utama untuk akses cepat seperti aplikasi.' : 'Add to your home screen for quick app-like access.'}</span>
+          <span>{id ? 'Install Aplikasi ke Home' : 'Install App to Home Screen'}</span>
         ) : (
           <span>
             {id ? (
