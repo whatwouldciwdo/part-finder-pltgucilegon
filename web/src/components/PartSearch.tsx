@@ -6,7 +6,7 @@ import { ViewerTarget } from './PageViewerModal';
 const PAGE_SIZE = 50;
 export function PartSearch({lang,catalogId,sections,setViewerTarget,setAssemblyModalId}: {
   lang: Lang; catalogId: number; sections: SectionItem[];
-  setViewerTarget: (target: ViewerTarget) => void; setAssemblyModalId: (id:number) => void;
+  setViewerTarget: (target: ViewerTarget) => void; setAssemblyModalId: (id: number, highlightKeyNo?: number) => void;
 }) {
   const t = dict[lang];
   const [sectionId, setSectionId] = useState<number | null>(null);
@@ -27,7 +27,17 @@ export function PartSearch({lang,catalogId,sections,setViewerTarget,setAssemblyM
     return () => window.clearTimeout(id);
   }, [query]);
 
+  const hasQuery = debouncedQuery.trim().length > 0;
+
   useEffect(() => {
+    if (!hasQuery) {
+      setItems([]);
+      setTotal(0);
+      setFuzzy(false);
+      setError(null);
+      setLoading(false);
+      return;
+    }
     const ctrl = new AbortController();
     setLoading(true);
     setError(null);
@@ -55,7 +65,7 @@ export function PartSearch({lang,catalogId,sections,setViewerTarget,setAssemblyM
       .finally(() => { if (!ctrl.signal.aborted) setLoading(false); });
 
     return () => ctrl.abort();
-  }, [debouncedQuery, field, catalogId, sectionId]);
+  }, [hasQuery, debouncedQuery, field, catalogId, sectionId]);
 
   const handleLoadMore = () => {
     if (loadingMore || items.length >= total) return;
@@ -183,20 +193,28 @@ export function PartSearch({lang,catalogId,sections,setViewerTarget,setAssemblyM
               )}
             </section>
 
-            <div className="results-bar">
-              <div className="results-count">
-                {loading ? t.loading : t.resultsCount(items.length, total)}
+            {hasQuery && (
+              <div className="results-bar">
+                <div className="results-count">
+                  {loading ? t.loading : t.resultsCount(items.length, total)}
+                </div>
+                {fuzzy && !loading && items.length > 0 && (
+                  <span className="fuzzy-badge">
+                    <Sparkles size={13} /> {t.fuzzyNotice}
+                  </span>
+                )}
               </div>
-              {fuzzy && !loading && items.length > 0 && (
-                <span className="fuzzy-badge">
-                  <Sparkles size={13} /> {t.fuzzyNotice}
-                </span>
-              )}
-            </div>
+            )}
 
             {error && <div className="state-box error">{error}</div>}
 
-            {!loading && !error && items.length === 0 && (
+            {!hasQuery && !error && (
+              <div className="state-box">
+                <div className="state-sub">{t.emptySearchHint}</div>
+              </div>
+            )}
+
+            {hasQuery && !loading && !error && items.length === 0 && (
               <div className="state-box">
                 <div className="state-title">{t.noResults}</div>
                 <div className="state-sub">{t.noResultsHint}</div>
@@ -221,11 +239,15 @@ export function PartSearch({lang,catalogId,sections,setViewerTarget,setAssemblyM
                     </thead>
                     <tbody>
                       {items.map((p) => (
-                        <tr key={p.id}>
+                        <tr
+                          key={p.id}
+                          className="clickable-row"
+                          onClick={() => setAssemblyModalId(p.assembly_id, p.key_no)}
+                        >
                           <td className="col-asm">
                             <button
                               className="asm-link"
-                              onClick={() => setAssemblyModalId(p.assembly_id)}
+                              onClick={(e) => { e.stopPropagation(); setAssemblyModalId(p.assembly_id, p.key_no); }}
                               title={`${p.section_no}. ${p.section_name}`}
                             >
                               <span className="code-badge">{p.assembly_code}</span>
@@ -245,7 +267,7 @@ export function PartSearch({lang,catalogId,sections,setViewerTarget,setAssemblyM
                                 {p.assy_dwg_no}
                                 <button
                                   className="copy-btn"
-                                  onClick={() => copyText(p.assy_dwg_no!, `a-${p.id}`)}
+                                  onClick={(e) => { e.stopPropagation(); copyText(p.assy_dwg_no!, `a-${p.id}`); }}
                                   title={t.copy}
                                 >
                                   {copiedKey === `a-${p.id}` ? <Check size={13} /> : <Copy size={13} />}
@@ -261,7 +283,7 @@ export function PartSearch({lang,catalogId,sections,setViewerTarget,setAssemblyM
                                 {p.dwg_no}
                                 <button
                                   className="copy-btn"
-                                  onClick={() => copyText(p.dwg_no!, `d-${p.id}`)}
+                                  onClick={(e) => { e.stopPropagation(); copyText(p.dwg_no!, `d-${p.id}`); }}
                                   title={t.copy}
                                 >
                                   {copiedKey === `d-${p.id}` ? <Check size={13} /> : <Copy size={13} />}
@@ -277,14 +299,14 @@ export function PartSearch({lang,catalogId,sections,setViewerTarget,setAssemblyM
                               {p.diagram_pages.length > 0 && (
                                 <button
                                   className="btn btn-xs btn-primary"
-                                  onClick={() => openPartPage(p, 'diagram')}
+                                  onClick={(e) => { e.stopPropagation(); openPartPage(p, 'diagram'); }}
                                 >
                                   <ImageIcon size={13} /> {t.viewDiagram}
                                 </button>
                               )}
                               <button
                                 className="btn btn-xs btn-outline"
-                                onClick={() => openPartPage(p, 'scan')}
+                                onClick={(e) => { e.stopPropagation(); openPartPage(p, 'scan'); }}
                                 title={`PDF p.${p.pdf_page}`}
                               >
                                 <FileText size={13} /> p.{p.pdf_page}
@@ -300,9 +322,16 @@ export function PartSearch({lang,catalogId,sections,setViewerTarget,setAssemblyM
                 {/* Mobile cards */}
                 <div className="cards-list mobile-only">
                   {items.map((p) => (
-                    <article key={p.id} className="part-card">
+                    <article
+                      key={p.id}
+                      className="part-card clickable-card"
+                      onClick={() => setAssemblyModalId(p.assembly_id, p.key_no)}
+                    >
                       <div className="card-top">
-                        <button className="asm-chip" onClick={() => setAssemblyModalId(p.assembly_id)}>
+                        <button
+                          className="asm-chip"
+                          onClick={(e) => { e.stopPropagation(); setAssemblyModalId(p.assembly_id, p.key_no); }}
+                        >
                           <span className="code-badge">{p.assembly_code}</span>
                           <span className="card-asm-title">{p.assembly_title}</span>
                         </button>
@@ -321,7 +350,7 @@ export function PartSearch({lang,catalogId,sections,setViewerTarget,setAssemblyM
                                 {p.assy_dwg_no}
                                 <button
                                   className="copy-btn"
-                                  onClick={() => copyText(p.assy_dwg_no!, `ma-${p.id}`)}
+                                  onClick={(e) => { e.stopPropagation(); copyText(p.assy_dwg_no!, `ma-${p.id}`); }}
                                 >
                                   {copiedKey === `ma-${p.id}` ? <Check size={13} /> : <Copy size={13} />}
                                 </button>
@@ -339,7 +368,7 @@ export function PartSearch({lang,catalogId,sections,setViewerTarget,setAssemblyM
                                 {p.dwg_no}
                                 <button
                                   className="copy-btn"
-                                  onClick={() => copyText(p.dwg_no!, `md-${p.id}`)}
+                                  onClick={(e) => { e.stopPropagation(); copyText(p.dwg_no!, `md-${p.id}`); }}
                                 >
                                   {copiedKey === `md-${p.id}` ? <Check size={13} /> : <Copy size={13} />}
                                 </button>
@@ -359,20 +388,20 @@ export function PartSearch({lang,catalogId,sections,setViewerTarget,setAssemblyM
                         {p.diagram_pages.length > 0 && (
                           <button
                             className="btn btn-sm btn-primary"
-                            onClick={() => openPartPage(p, 'diagram')}
+                            onClick={(e) => { e.stopPropagation(); openPartPage(p, 'diagram'); }}
                           >
                             <ImageIcon size={14} /> {t.viewDiagram}
                           </button>
                         )}
                         <button
                           className="btn btn-sm btn-outline"
-                          onClick={() => openPartPage(p, 'scan')}
+                          onClick={(e) => { e.stopPropagation(); openPartPage(p, 'scan'); }}
                         >
                           <FileText size={14} /> {t.viewScan} (p.{p.pdf_page})
                         </button>
                         <button
                           className="btn btn-sm btn-ghost"
-                          onClick={() => setAssemblyModalId(p.assembly_id)}
+                          onClick={(e) => { e.stopPropagation(); setAssemblyModalId(p.assembly_id, p.key_no); }}
                         >
                           <Layers size={14} /> {t.viewAssembly}
                         </button>

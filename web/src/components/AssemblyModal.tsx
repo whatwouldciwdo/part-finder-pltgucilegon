@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { FileText, Image as ImageIcon, X } from 'lucide-react';
 import { AssemblyDetail, getAssembly, pageImageUrl } from '../api';
 import { dict, Lang } from '../i18n';
@@ -6,16 +6,24 @@ import { ViewerTarget } from './PageViewerModal';
 
 interface Props {
   assemblyId: number;
+  highlightKeyNo?: number | null;
   lang: Lang;
   onClose: () => void;
   onOpenViewer: (target: ViewerTarget) => void;
 }
 
-export function AssemblyModal({ assemblyId, lang, onClose, onOpenViewer }: Props) {
+export function AssemblyModal({ assemblyId, highlightKeyNo, lang, onClose, onOpenViewer }: Props) {
   const t = dict[lang];
   const [data, setData] = useState<AssemblyDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const highlightRowRef = useRef<HTMLTableRowElement | null>(null);
+
+  useEffect(() => {
+    if (data && highlightKeyNo != null && highlightRowRef.current) {
+      highlightRowRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [data, highlightKeyNo]);
 
   useEffect(() => {
     let active = true;
@@ -123,8 +131,14 @@ export function AssemblyModal({ assemblyId, lang, onClose, onOpenViewer }: Props
                   </tr>
                 </thead>
                 <tbody>
-                  {data.parts.map((p) => (
-                    <tr key={p.id}>
+                  {data.parts.map((p) => {
+                    const isHighlighted = highlightKeyNo != null && p.key_no === highlightKeyNo;
+                    return (
+                    <tr
+                      key={p.id}
+                      ref={isHighlighted ? highlightRowRef : undefined}
+                      className={isHighlighted ? 'part-row-highlight' : undefined}
+                    >
                       <td className="col-key">
                         <span className="key-pill">#{p.key_no}</span>
                       </td>
@@ -144,7 +158,7 @@ export function AssemblyModal({ assemblyId, lang, onClose, onOpenViewer }: Props
                         )}
                       </td>
                     </tr>
-                  ))}
+                  );})}
                 </tbody>
               </table>
             </div>

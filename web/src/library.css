@@ -39,6 +39,11 @@
 .assembly-row { display:grid; grid-template-columns:48px 1fr 20px; align-items:center; text-align:left; width:100%; padding:15px; gap:12px; margin-top:8px; cursor:pointer; }
 .section-tiles a:hover,.assembly-row:hover,.drawing-preview:hover {border-color:var(--primary);}
 .parts-table th,.code-badge,.viewer-header {background:var(--header);color:white;}.key-pill,.chip.active {background:var(--primary-soft);color:var(--text);}
+.clickable-row { cursor:pointer; }
+.clickable-row:hover td { background:var(--primary-soft); }
+.clickable-card { cursor:pointer; transition:border-color .15s; }
+.clickable-card:hover { border-color:var(--primary); }
+.part-row-highlight td { background:#ecfccb !important; }
 .assembly-detail:has(.drawing-preview) {display:grid;grid-template-columns:minmax(210px,32%) minmax(0,1fr);align-items:start;gap:16px;}
 .drawing-preview {padding:12px;cursor:zoom-in;display:grid;gap:10px;width:100%;}.drawing-preview img {width:100%;max-height:350px;object-fit:contain;}.drawing-preview strong {background:var(--lime);padding:10px;border-radius:8px;}
 .library :focus-visible { outline:3px solid #569326;outline-offset:2px; }
