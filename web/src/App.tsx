@@ -3,6 +3,7 @@ import { ArrowRight, BookOpen, ChevronRight, Layers, Search } from 'lucide-react
 import { Catalog, getCatalogs, getSections, pageImageUrl, SectionItem } from './api';
 import { dict, Lang } from './i18n';
 import { AssemblyPage } from './components/AssemblyPage';
+import { InstallBanner } from './components/InstallBanner';
 import { PartSearch } from './components/PartSearch';
 import { PageViewerModal, ViewerTarget } from './components/PageViewerModal';
 
@@ -71,5 +72,6 @@ export function App() {
         {c.name==='M701F' && <img src="/catalog/m701f/model.webp" alt="M701F"/>}<div><small>{c.name==='M701F'?'MITSUBISHI / GAS TURBINE':'GAS TURBINE'}</small><h2>MODEL {c.name}</h2><p>{c.section_count} section &nbsp;/&nbsp; {c.assembly_count} assembly</p><strong>{id?'Buka katalog':'Open catalog'} <ArrowRight size={18}/></strong></div></a>)}</> : search ? <PartSearch lang={lang} catalogId={model.id} sections={scoped} setViewerTarget={setViewer} setAssemblyModalId={openAssemblyPage}/> : assemblyId ? <AssemblyPage assemblyId={assemblyId} highlightKeyNo={highlightKeyNo} lang={lang} onBack={() => history.length > 1 ? history.back() : (location.hash = `#${model.id}`)} onOpenViewer={setViewer}/> : section && section.catalog_id===model.id ? <div className="section-layout"><div className="section-summary">{sectionImage(section) && <img src={sectionImage(section)} alt=""/>}<p>{t.assembliesCount(section.assemblies.length)}</p><a href={`#${model.id}`}>Table of Contents</a></div><div><h2>{id?'Daftar assembly':'Assembly list'}</h2>{section.assemblies.map(a=><button className="assembly-row" key={a.id} onClick={()=>openAssemblyPage(a.id)}><span>{a.code}</span><b>{a.title||a.code}</b><ChevronRight size={18}/></button>)}</div></div> : <div className="section-tiles">{scoped.map(s=><a key={s.id} href={`#${model.id}/section/${s.id}`}><small>SECTION {String(s.no).padStart(2,'0')}</small>{sectionImage(s) && <img src={sectionImage(s)} alt=""/>}<h2>{sectionName(s)}</h2><p>{t.assembliesCount(s.assemblies.length)} <ArrowRight size={16}/></p></a>)}</div>}
     </main></div>
     {viewer && <PageViewerModal target={viewer} lang={lang} onClose={()=>setViewer(null)}/>}
+    <InstallBanner lang={lang}/>
   </div>;
 }

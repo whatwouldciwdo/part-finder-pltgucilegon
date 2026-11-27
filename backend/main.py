@@ -410,9 +410,14 @@ def serve_spa(full_path: str):
         target = (dist_root / full_path).resolve()
         if str(target).startswith(str(dist_root)) and target.is_file():
             cache = "public, max-age=31536000, immutable" if full_path.startswith("assets/") else "public, max-age=3600"
-            if full_path in ("sw.js", "manifest.webmanifest"):
+            media_type = None
+            if full_path == "manifest.webmanifest":
                 cache = "no-cache"
-            return FileResponse(target, headers={"Cache-Control": cache})
+                media_type = "application/manifest+json"
+            elif full_path == "sw.js":
+                cache = "no-cache"
+                media_type = "application/javascript"
+            return FileResponse(target, media_type=media_type, headers={"Cache-Control": cache})
 
     index_file = dist_root / "index.html"
     if not index_file.is_file():
